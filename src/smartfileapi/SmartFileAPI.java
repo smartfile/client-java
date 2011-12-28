@@ -18,7 +18,7 @@ public class SmartFileAPI {
 
     // This function does the bulk of the work by performing
     // the HTTP request and raising an exception for any HTTP
-    // status code other than 201.
+    // status code that does not signify success for the operation.
     private static void httpRequest(String uri, Hashtable<String, String> data, String method) throws Exception {
         // We use the XML format because Java has no native JSON decoder.
         String url = String.format("%s%s?format=xml", API_URL, uri);
@@ -53,10 +53,13 @@ public class SmartFileAPI {
             requestStream.close();
         }
         int status = conn.getResponseCode();
-        if (status == 201)
+        if ((method.equals("GET") && status == 200) ||
+            (method.equals("POST") && status == 201) ||
+            (method.equals("PUT") && status == 200) ||
+            (method.equals("DELETE") && status == 204))
             // Success, return.
             return;
-        // Non-201 status code, parse message and throw an Exception.
+        // Non-success status code, parse message and throw an Exception.
         BufferedReader responseStream = new BufferedReader(new InputStreamReader(conn.getErrorStream()));
         responseStream.mark(1024);
         StringBuffer responseString = new StringBuffer(1024);
@@ -72,7 +75,7 @@ public class SmartFileAPI {
             XmlMessageParser handler = new XmlMessageParser();
             xr.setContentHandler(handler);
             xr.setErrorHandler(handler);
-	    xr.parse(new InputSource(responseStream));
+            xr.parse(new InputSource(responseStream));
             message = handler.getMessage();
         }
         catch (Exception e) {
@@ -95,5 +98,9 @@ public class SmartFileAPI {
         data.put("password", password);
         data.put("email", email);
         httpRequest("/users/add/", data, "POST");
+    }
+
+    public static void DeleteUser(String username) throws Exception {
+        httpRequest("/users/delete/" + username, null, "DELETE");
     }
 }
