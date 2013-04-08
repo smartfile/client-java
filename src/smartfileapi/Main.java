@@ -12,11 +12,15 @@ public class Main {
          return scan.nextLine();
     }
 
+    private static String API_URL = "http://vkovalenko.smartfile.com/api/1";
+    private static String API_KEY = "fSEgN3SdzVvfwbOUuv2WUtLO4Gtrmj";
+    private static String API_PWD = "06hKBxYpN3pHYRquOjlzbeki9kzXj2";
+
     // Get things started in main()
     public static void main(String[] args) {
         // Ask the user for the required parameters. These will be
         // passed to the API via an HTTP POST request.
-         String fullname = prompt("Please enter a full name: ");
+         /*String fullname = prompt("Please enter a full name: ");
          String username = prompt("Please enter a username: ");
          String password = prompt("Please enter a password: ");
          String email = prompt("Please enter an email address: ");
@@ -28,7 +32,8 @@ public class Main {
          catch (Exception e) {
              // Print the error message from the server on failure.
              System.out.println(String.format("Error creating User %s: %s.", username, e.toString()));
-         }
+         }*/
+        BasicClient api = new BasicClient(API_KEY,API_PWD);
     }
 
 }
