@@ -33,7 +33,13 @@ public class Main {
              // Print the error message from the server on failure.
              System.out.println(String.format("Error creating User %s: %s.", username, e.toString()));
          }*/
-        BasicClient api = new BasicClient(API_KEY,API_PWD);
+        try {
+            BasicClient api = new BasicClient(API_KEY,API_PWD);
+            System.out.println(api.get("/ping"));
+            System.out.println(api.get("/path/info"));
+        } catch (SmartFileException e) {
+            System.out.println(e.toString());
+        }
     }
 
 }

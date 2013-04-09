@@ -12,7 +12,7 @@ import org.xml.sax.helpers.XMLReaderFactory;
 
 public class SmartFileAPI {
     // These constants are needed to access the API.
-    private static String API_URL = "http://vkovalenko.smartfile.com/api/1";
+    private static String API_URL = "http://app.smartfile.com/api/1";
     private static String API_KEY = "fSEgN3SdzVvfwbOUuv2WUtLO4Gtrmj";
     private static String API_PWD = "06hKBxYpN3pHYRquOjlzbeki9kzXj2";
 
