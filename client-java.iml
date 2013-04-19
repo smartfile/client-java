@@ -9,6 +9,8 @@
     <orderEntry type="sourceFolder" forTests="false" />
     <orderEntry type="library" name="commons-codec-1.6" level="project" />
     <orderEntry type="library" name="org.apache.commons:commons-lang3:3.1" level="project" />
+    <orderEntry type="library" name="signpost-core-1.2.1.2" level="project" />
+    <orderEntry type="library" name="oauth.signpost:signpost-commonshttp4:1.2.1.2" level="project" />
   </component>
 </module>
 
