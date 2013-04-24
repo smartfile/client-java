@@ -90,8 +90,8 @@ public class BasicClient extends Client{
      */
     public BasicClient() throws SmartFileException {
         super();
-        if (System.getenv("SMARTFILE_API_KEY") != null && System.getenv("SMARTFILE_API_PASS") != null) {
-            save_credentials(System.getenv("SMARTFILE_API_KEY"),System.getenv("SMARTFILE_API_PASS"));
+        if (getEnvVariable("SMARTFILE_API_KEY") != null && getEnvVariable("SMARTFILE_API_PASS") != null) {
+            save_credentials(getEnvVariable("SMARTFILE_API_KEY"),getEnvVariable("SMARTFILE_API_PASS"));
         } else {
             save_from_file(System.getProperty("user.home") + "/.netrc");
         }

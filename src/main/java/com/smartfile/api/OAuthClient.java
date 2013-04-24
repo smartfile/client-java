@@ -49,7 +49,7 @@ public class OAuthClient extends Client {
      */
     public OAuthClient() {
         super();
-        this.client = new OAuthToken(System.getenv("SMARTFILE_CLIENT_TOKEN"),System.getenv("SMARTFILE_CLIENT_SECRET"));
+        this.client = new OAuthToken(getEnvVariable("SMARTFILE_CLIENT_TOKEN"),getEnvVariable("SMARTFILE_CLIENT_SECRET"));
     }
 
     /**

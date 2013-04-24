@@ -87,13 +87,18 @@ public abstract class Client {
     protected String version = "2.1";
     private final String API_URL = "https://app.smartfile.com";
     private final String HTTP_USER_AGENT = String.format("SmartFile Java API client v%s",version);
+    protected Map<String, String> headers = new HashMap<String, String>();
+
+    protected String  getEnvVariable(String name) {
+        return System.getenv(name);
+    }
 
     /**
      * Use this method to set you own API url stored at environment variable SMARTFILE_API_URL
      * instead of default "https://app.smartfile.com"
      */
     public void setApiUrl() {
-        setApiUrl(System.getenv("SMARTFILE_API_URL"));
+        setApiUrl(getEnvVariable("SMARTFILE_API_URL"));
     }
 
     /**
@@ -105,8 +110,24 @@ public abstract class Client {
         this.url = url;
     }
 
+    /**
+     * @return String - the api url
+     */
+    public String getApiUrl() {
+        return this.url;
+    }
+
+    /**
+     * Adds a header to request
+     * @param name Header name
+     * @param value Header value
+     */
+    public void addHeader(String name,String value) {
+        headers.put(name,value);
+    }
+
     protected Client() {
-        String env_url = System.getenv("SMARTFILE_API_URL");
+        String env_url = getEnvVariable("SMARTFILE_API_URL");
         if (env_url == null) {
             url = API_URL;
         } else {
@@ -365,7 +386,7 @@ public abstract class Client {
         }
         path = path.replaceAll("//","/");
         String url = this.url + path;
-        args.put("User-Agent",HTTP_USER_AGENT);
+        headers.put("User-Agent",HTTP_USER_AGENT);
 
         for (int trys = 0; trys < 3; trys++) {
             try {
@@ -381,8 +402,6 @@ public abstract class Client {
     }
 
     protected InputStream do_request(String method, String url, Map<String,String> args, File[] files, String strArgs, OAuthConsumer consumer) throws IOException, SmartFileException {
-        String user_agent = args.get("User-Agent");
-
         String basic_auth = "";
         String key = "";
         String pwd = "";
@@ -395,8 +414,7 @@ public abstract class Client {
         }
         HttpClient client = new DefaultHttpClient();
 
-        client.getParams().setParameter(CoreProtocolPNames.USER_AGENT, user_agent);
-        args.remove("User-Agent");
+        client.getParams().setParameter(CoreProtocolPNames.USER_AGENT, headers.get("User-Agent"));
 
         String params = "";
 
@@ -456,14 +474,19 @@ public abstract class Client {
             }
             HttpResponse response;
             if (method == "post") {
+                for (Map.Entry<String, String> entry : headers.entrySet()) {
+                    request_post.addHeader(entry.getKey(),entry.getValue());
+                }
                 response = client.execute(request_post);
             } else {
+                for (Map.Entry<String, String> entry : headers.entrySet()) {
+                    request.addHeader(entry.getKey(),entry.getValue());
+                }
                 response = client.execute(request);
             }
 
             if (response.getHeaders("Location").length == 1) {
                 args.clear();
-                args.put("User-Agent",user_agent);
                 args.put("key",key);
                 args.put("pwd",pwd);
                 return this.do_request("get", response.getHeaders("Location")[0].getValue(), args, null, null, consumer);
@@ -471,6 +494,7 @@ public abstract class Client {
 
             HttpEntity entity = response.getEntity();
 
+            headers.clear();
 
             if (entity != null) {
                 return entity.getContent();
@@ -487,6 +511,8 @@ public abstract class Client {
         } catch (OAuthCommunicationException e) {
             e.printStackTrace();
             return null;
+        } finally {
+            headers.clear();
         }
     }
 }
