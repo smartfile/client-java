@@ -31,6 +31,8 @@ public class BasicClient extends Client{
         try {
             this.key = clean_token(key);
             this.pwd = clean_token(pwd);
+            Authentication authentication = new Authentication(this.key,this.pwd);
+            setAuthentication(authentication);
         } catch (Exception e) {
             throw new SmartFileException("Please provide an API key and password. Use arguments or environment variables.", 0);
         }
@@ -104,14 +106,6 @@ public class BasicClient extends Client{
         }
         return token;
 
-    }
-
-    protected InputStream do_request(String method, String url, Map<String,String> args, File[] files, String strArgs, OAuthConsumer consumer) throws IOException, SmartFileException {
-        if (args == null)
-            args = new HashMap<String, String>();
-        args.put("key",this.key);
-        args.put("pwd",this.pwd);
-        return super.do_request(method,url,args,files,strArgs,consumer);
     }
 }
 

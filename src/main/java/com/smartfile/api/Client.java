@@ -23,6 +23,8 @@ import org.apache.http.params.CoreProtocolPNames;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.UnsupportedEncodingException;
+import java.net.URLEncoder;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -88,6 +90,15 @@ public abstract class Client {
     private final String API_URL = "https://app.smartfile.com";
     private final String HTTP_USER_AGENT = String.format("SmartFile Java API client v%s",version);
     protected Map<String, String> headers = new HashMap<String, String>();
+    protected Authentication authentication;
+
+    protected void setAuthentication(Authentication authentication) {
+        this.authentication = authentication;
+    }
+
+    protected Authentication getAuthentication() {
+        return this.authentication;
+    }
 
     protected String  getEnvVariable(String name) {
         return System.getenv(name);
@@ -371,8 +382,8 @@ public abstract class Client {
 
     private InputStream request(String method, String endpoint, String id, Map<String, String> args, String strArgs, File[] files) throws SmartFileException {
 
-        if (args == null)
-            args = new HashMap<String, String>();
+        if (args != null)
+            strArgs = convertMapParamsToString(args);
 
         List<String> pathArray = new ArrayList<String>();
         pathArray.add("/api");
@@ -386,11 +397,11 @@ public abstract class Client {
         }
         path = path.replaceAll("//","/");
         String url = this.url + path;
-        headers.put("User-Agent",HTTP_USER_AGENT);
+        addHeader("User-Agent",HTTP_USER_AGENT);
 
         for (int trys = 0; trys < 3; trys++) {
             try {
-                return do_request(method,url,args,files,strArgs,null);
+                return do_request(method,url,strArgs,files);
             } catch (IOException e) {
                 continue;
             } catch (SmartFileException e) {
@@ -401,40 +412,29 @@ public abstract class Client {
         return null;
     }
 
-    protected InputStream do_request(String method, String url, Map<String,String> args, File[] files, String strArgs, OAuthConsumer consumer) throws IOException, SmartFileException {
-        String basic_auth = "";
-        String key = "";
-        String pwd = "";
-        if (consumer == null) {
-            key = args.get("key");
-            pwd = args.get("pwd");
-            basic_auth = new String(Base64.encodeBase64((key + ":" + pwd).getBytes()));
-            args.remove("key");
-            args.remove("pwd");
-        }
+    protected InputStream do_request(String method, String url, String args, File[] files) throws IOException, SmartFileException {
         HttpClient client = new DefaultHttpClient();
+        HttpResponse response;
 
         client.getParams().setParameter(CoreProtocolPNames.USER_AGENT, headers.get("User-Agent"));
 
+        //Prepearing request parameters
         String params = "";
+        if (args != null)
+            params = '?' + args;
 
-        if (!args.isEmpty()) {
-            URIBuilder builder = new URIBuilder();
-            for (Map.Entry<String,String> entry : args.entrySet()) {
-                builder.setParameter(entry.getKey(),entry.getValue());
-            }
-            params = builder.toString();
-        } else if (strArgs != null) {
-            params = '?' + strArgs;
-        }
-
+        /*
+           In block below we are prepearing post parameters.
+           We are using different entities for file uploading
+           and a plain test parameters.
+         */
         MultipartEntity request_file_entity = new MultipartEntity();
         HttpEntity request_entity = new BasicHttpEntity();
         if (method == "post") {
             if (files != null) {
                 for (int i = 0; i < files.length; i++) {
                     FileBody file_body = new FileBody(files[i]);
-                    request_file_entity.addPart(files[i].getName(),file_body);
+                    request_file_entity.addPart(files[i].getName(), file_body);
                 }
             } else if (params.length() > 0) {
                 request_entity = new StringEntity(params.substring(1), ContentType.create("application/x-www-form-urlencoded"));
@@ -446,6 +446,7 @@ public abstract class Client {
         HttpRequestBase request = new HttpGet();
         HttpPost request_post = new HttpPost();
 
+        // Creating request with params
         if (method == "get") {
             request = new HttpGet(url + params);
         } else if (method == "post") {
@@ -462,36 +463,29 @@ public abstract class Client {
         }
 
         try {
-            if (consumer == null) {
-                request.addHeader("Authorization", "Basic " + basic_auth);
-                request_post.addHeader("Authorization", "Basic " + basic_auth);
-            } else {
-                try {
-                    consumer.sign(request);
-                } catch (NullPointerException e) {
-                    consumer.sign(request_post);
-                }
+
+            // Adding headers and authentication to the requests
+            for (Map.Entry<String, String> entry : headers.entrySet()) {
+                request_post.addHeader(entry.getKey(), entry.getValue());
+                request.addHeader(entry.getKey(), entry.getValue());
             }
-            HttpResponse response;
-            if (method == "post") {
-                for (Map.Entry<String, String> entry : headers.entrySet()) {
-                    request_post.addHeader(entry.getKey(),entry.getValue());
-                }
-                response = client.execute(request_post);
+            signRequest(request_post);
+            signRequest(request);
+
+            // Executing request depending on it's method
+            if (method.equals("post")) {
+               response = client.execute(request_post);
             } else {
-                for (Map.Entry<String, String> entry : headers.entrySet()) {
-                    request.addHeader(entry.getKey(),entry.getValue());
-                }
-                response = client.execute(request);
+               response = client.execute(request);
             }
 
+            // If we were redirected (e.g. when performing long-running operations like moving) we're sending a request
+            // to a new location
             if (response.getHeaders("Location").length == 1) {
-                args.clear();
-                args.put("key",key);
-                args.put("pwd",pwd);
-                return this.do_request("get", response.getHeaders("Location")[0].getValue(), args, null, null, consumer);
+                return this.do_request("get", response.getHeaders("Location")[0].getValue(), args, null);
             }
 
+            // Processing response
             HttpEntity entity = response.getEntity();
 
             headers.clear();
@@ -513,6 +507,34 @@ public abstract class Client {
             return null;
         } finally {
             headers.clear();
+        }
+    }
+
+    private String convertMapParamsToString(Map<String, String > params) {
+        StringBuilder stringBuilder = new StringBuilder();
+        for (String key : params.keySet()) {
+            if (stringBuilder.length() > 0) {
+                stringBuilder.append('&');
+            }
+            String value = params.get(key);
+            try {
+                stringBuilder.append((key != null ? URLEncoder.encode(key, "UTF-8") : ""));
+                stringBuilder.append('=');
+                stringBuilder.append(value != null ? URLEncoder.encode(value, "UTF-8") : "");
+            } catch (UnsupportedEncodingException e) {
+                throw new RuntimeException("Exception Occured", e);
+            }
+        }
+
+        return stringBuilder.toString();
+    }
+
+    private void signRequest(HttpRequestBase requestBase) throws OAuthMessageSignerException, OAuthExpectationFailedException, OAuthCommunicationException{
+        if (authentication.equals(Authentication.AUTH_OAUTH)) {
+               authentication.getoAuthConsumer().sign(requestBase);
+        } else {
+            String basic_auth = new String(Base64.encodeBase64((authentication.getBasicKey() + ":" + authentication.getBasicPwd()).getBytes()));
+            requestBase.addHeader("Authorization", "Basic " + basic_auth);
         }
     }
 }

@@ -125,6 +125,8 @@ public class OAuthClient extends Client {
         try{
             provider.setOAuth10a(true);
             provider.retrieveAccessToken(consumer, verifier);
+            Authentication authentication = new Authentication(consumer);
+            setAuthentication(authentication);
         } catch (OAuthMessageSignerException e) {
             e.printStackTrace();
         } catch (OAuthExpectationFailedException e) {
@@ -142,8 +144,5 @@ public class OAuthClient extends Client {
         }
     }
 
-    protected InputStream do_request(String method, String url, Map<String,String> args, File[] files, String strArgs, OAuthConsumer consumer) throws IOException, SmartFileException {
-        return super.do_request(method,url,args,files,strArgs,this.consumer);
-    }
 }
 
