@@ -92,8 +92,9 @@ public class OAuthClient extends Client {
         } catch (OAuthExpectationFailedException e) {
             e.printStackTrace();
         } catch (OAuthCommunicationException e) {
+            // FIXME:  this should not blindly try again if receiving a 403
             trys++;
-            if (trys < 10) {
+            if (trys < 3) {
                 get_request_token(callback);
                 trys = 0;
             } else {
@@ -132,8 +133,9 @@ public class OAuthClient extends Client {
         } catch (OAuthExpectationFailedException e) {
             e.printStackTrace();
         } catch (OAuthCommunicationException e) {
+            // FIXME:  this should not blindly try again if receiving a 403
             trys++;
-            if (trys < 10) {
+            if (trys < 3) {
                 get_access_token(verifier);
                 trys = 0;
             } else {
