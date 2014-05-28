@@ -66,8 +66,7 @@ sample Java code::
 OAuth Authentication
 --------------------
 
-Authentication using OAuth authentication is bit more complicated,
- as it involves tokens and secrets. See Known Issues below.
+Authentication using OAuth authentication is bit more complicated, as it involves tokens and secrets. See Known Issues below.
 
 
 Calling endpoints
