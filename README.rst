@@ -142,3 +142,6 @@ Known Issues
 
 * OAuth in the Java client is still under development; use an API Key (basic authentication) at this time.
 
+
+.. _SmartFile: http://www.smartfile.com/
+.. _Read more: http://www.smartfile.com/open-source.html
