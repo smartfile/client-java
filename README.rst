@@ -57,7 +57,7 @@ sample Java code::
 
        import com.smartfile.api.*;
        BasicClient api = new BasicClient("**********", "**********");
-       api.setApiUrl("app.smartfile.com");
+       api.setApiUrl("https://app.smartfile.com");
        String result = responseToString(api.get("/ping"));
        System.out.println("Ping test:");
        System.out.println(result);
@@ -90,7 +90,7 @@ sample Java code::
 
        import com.smartfile.api.*;
        BasicClient api = new BasicClient("**********", "**********");
-       api.setApiUrl("app.smartfile.com");
+       api.setApiUrl("https://app.smartfile.com");
        String result = responseToString(api.get("/whoami"));
        System.out.println("Whoami test:");
        System.out.println(result);
@@ -106,7 +106,7 @@ To upload a file::
 
     import com.smartfile.api.*;
     BasicClient api = new BasicClient("**********", "**********");
-    api.setApiUrl("app.smartfile.com");
+    api.setApiUrl("https://app.smartfile.com");
     // @TODO
 
 
@@ -119,7 +119,7 @@ To download a file::
 
     import com.smartfile.api.*;
     BasicClient api = new BasicClient("**********", "**********");
-    api.setApiUrl("app.smartfile.com");
+    api.setApiUrl("https://app.smartfile.com");
     InputStream in = api.get("/path/data","/YourFolder/remote-file.txt");
     FileOutputStream out = new FileOutputStream("local-file.txt");
     int c;
